@@ -3,6 +3,7 @@
 #include <GL/gl.h>
 
 #include <filesystem>
+#include <caf/actor_registry.hpp>
 
 #include "decklink_audio_device.hpp"
 #include "decklink_plugin.hpp"
@@ -108,10 +109,6 @@ BMDecklinkPlugin::BMDecklinkPlugin(
     disable_pc_audio_when_running_ = add_boolean_attribute("Auto Disable PC Audio", "Auto Disable PC Audio", false);
     disable_pc_audio_when_running_->set_preference_path("/plugin/decklink/disable_pc_audio_when_sdi_is_running");
     disable_pc_audio_when_running_->expose_in_ui_attrs_group("Decklink Settings");
-<<<<<<< HEAD
-=======
-
->>>>>>> ee1e629c4b4ca64ea35564c945ed74f1a7835be2
 
     VideoOutputPlugin::finalise();
 }
@@ -207,14 +204,7 @@ void BMDecklinkPlugin::attribute_changed(const utility::Uuid &attribute_uuid, co
             } else {
                 send(main_viewport_, module::link_module_atom_v, offscreen_viewport_, false);
             }*/
-            if (track_main_viewport_->value()) {
-                viewport_geometry_sync_mode(
-                    viewport::ViewportSyncMode::ViewportSyncMirrorMode | 
-                    viewport::ViewportSyncMode::ViewportSyncZoomAndPan |
-                    viewport::ViewportSyncMode::ViewportSyncFitMode);
-            } else {
-                viewport_geometry_sync_mode(viewport::ViewportSyncMode::ViewportSyncMirrorMode);
-            }
+            sync_geometry_to_main_viewport(track_main_viewport_->value());
 
         } else if (attribute_uuid == samples_water_level_->uuid()) {
             dcl_output_->set_audio_samples_water_level(samples_water_level_->value());
@@ -280,7 +270,7 @@ void BMDecklinkPlugin::initialise() {
             dcl_output_->StartStop();
         }
 
-        viewport_geometry_sync_mode(viewport::ViewportSyncMode::ViewportSyncMirrorMode);
+        sync_geometry_to_main_viewport(false);
 
         video_delay_milliseconds(video_pipeline_delay_milliseconds_->value());
 
