@@ -250,16 +250,19 @@ Item {
                 }
 
                 DecklinkIntegerSetting {
+                    Layout.fillWidth: true
                     integer_attr_name: "Audio Sync Delay"
-                    display_name: "Audio Delay / msec"
+                    display_name: "Audio Delay (ms)"
                 }
                     
                 DecklinkIntegerSetting {
+                    Layout.fillWidth: true
                     integer_attr_name: "Video Sync Delay"
-                    display_name: "Video Delay / msec"
+                    display_name: "Video Delay (ms)"
                 }
 
                 DecklinkToggleSetting {
+                    Layout.fillWidth: true
                     display_name: "Mute PC Audio"
                     toggle_attr_name: "Auto Disable PC Audio"
                 }

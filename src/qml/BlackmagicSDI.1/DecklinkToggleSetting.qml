@@ -8,10 +8,13 @@ import xStudio 1.0
 import xstudio.qml.models 1.0
 import xstudio.qml.helpers 1.0
 
-ColumnLayout {
+RowLayout {
 
     property var toggle_attr_name
     property var display_name
+
+    spacing: 10
+    Layout.fillWidth: true
 
     XsAttributeValue {
         id: the_attr
@@ -22,11 +25,12 @@ ColumnLayout {
 
     XsLabel {
         text: display_name
-        Layout.alignment: Qt.AlignLeft
+        Layout.alignment: Qt.AlignVCenter | Qt.AlignLeft
+        Layout.fillWidth: true
     }
 
     XsCheckBox {
-        Layout.alignment: Qt.AlignLeft
+        Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
         checked: attr_value
         onClicked: attr_value = !attr_value
     }

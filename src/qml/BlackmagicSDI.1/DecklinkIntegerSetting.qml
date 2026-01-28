@@ -8,10 +8,13 @@ import xStudio 1.0
 import xstudio.qml.models 1.0
 import xstudio.qml.helpers 1.0
 
-ColumnLayout {
+RowLayout {
 
     property var integer_attr_name
     property var display_name
+
+    spacing: 10
+    Layout.fillWidth: true
 
     XsAttributeValue {
         id: the_attr
@@ -22,17 +25,19 @@ ColumnLayout {
 
     XsLabel {
         text: display_name
-        Layout.alignment: Qt.AlignLeft
+        Layout.alignment: Qt.AlignVCenter | Qt.AlignLeft
+        Layout.fillWidth: true
     }
 
     XsTextField {
 
-        Layout.alignment: Qt.AlignLeft
+        Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
         text: attr_value
-        wrapMode: Text.Wrap
-        Layout.preferredWidth: 80
+        Layout.preferredWidth: 60
+        Layout.preferredHeight: 24
         clip: true
         bgColor: palette.base
+        horizontalAlignment: TextInput.AlignHCenter
         onActiveFocusChanged:{
             if(activeFocus) selectAll()
         }
