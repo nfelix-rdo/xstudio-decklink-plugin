@@ -36,10 +36,10 @@ public:
 	// IDeckLinkVideoFrame interface
 	virtual long			STDMETHODCALLTYPE	GetWidth(void)			{ return _width; };
 	virtual long			STDMETHODCALLTYPE	GetHeight(void)			{ return _height; };
-	virtual long			STDMETHODCALLTYPE	GetRowBytes(void)		{ return _width * 4; };
+	virtual long			STDMETHODCALLTYPE	GetRowBytes(void)		{ return ((_width + 63) / 64) * 256; };
 	virtual HRESULT			STDMETHODCALLTYPE	GetBytes(void** buffer);
 	virtual BMDFrameFlags	STDMETHODCALLTYPE	GetFlags(void)			{ return _flags; };
-	virtual BMDPixelFormat	STDMETHODCALLTYPE	GetPixelFormat(void)	{ return bmdFormat10BitRGBX; };
+	virtual BMDPixelFormat	STDMETHODCALLTYPE	GetPixelFormat(void)	{ return bmdFormat10BitRGB; };
 	
 	// Dummy implementations of remaining methods in IDeckLinkVideoFrame
 	virtual HRESULT			STDMETHODCALLTYPE	GetAncillaryData(IDeckLinkVideoFrameAncillary** ancillary) { return E_NOTIMPL; };

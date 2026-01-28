@@ -108,10 +108,6 @@ BMDecklinkPlugin::BMDecklinkPlugin(
     disable_pc_audio_when_running_ = add_boolean_attribute("Auto Disable PC Audio", "Auto Disable PC Audio", false);
     disable_pc_audio_when_running_->set_preference_path("/plugin/decklink/disable_pc_audio_when_sdi_is_running");
     disable_pc_audio_when_running_->expose_in_ui_attrs_group("Decklink Settings");
-<<<<<<< HEAD
-=======
-
->>>>>>> ee1e629c4b4ca64ea35564c945ed74f1a7835be2
 
     VideoOutputPlugin::finalise();
 }
@@ -202,19 +198,15 @@ void BMDecklinkPlugin::attribute_changed(const utility::Uuid &attribute_uuid, co
 
         } else if (attribute_uuid == track_main_viewport_->uuid()) {
 
+            // TODO: ViewportSyncMode API not available in current xStudio build
             /*if (track_main_viewport_->value()) {
-                send(main_viewport_, ui::viewport::other_viewport_atom_v, offscreen_viewport_, caf::actor());
-            } else {
-                send(main_viewport_, module::link_module_atom_v, offscreen_viewport_, false);
-            }*/
-            if (track_main_viewport_->value()) {
                 viewport_geometry_sync_mode(
                     viewport::ViewportSyncMode::ViewportSyncMirrorMode | 
                     viewport::ViewportSyncMode::ViewportSyncZoomAndPan |
                     viewport::ViewportSyncMode::ViewportSyncFitMode);
             } else {
                 viewport_geometry_sync_mode(viewport::ViewportSyncMode::ViewportSyncMirrorMode);
-            }
+            }*/
 
         } else if (attribute_uuid == samples_water_level_->uuid()) {
             dcl_output_->set_audio_samples_water_level(samples_water_level_->value());
@@ -280,7 +272,8 @@ void BMDecklinkPlugin::initialise() {
             dcl_output_->StartStop();
         }
 
-        viewport_geometry_sync_mode(viewport::ViewportSyncMode::ViewportSyncMirrorMode);
+        // TODO: ViewportSyncMode API not available in current xStudio build
+        // viewport_geometry_sync_mode(viewport::ViewportSyncMode::ViewportSyncMirrorMode);
 
         video_delay_milliseconds(video_pipeline_delay_milliseconds_->value());
 
@@ -300,8 +293,8 @@ void BMDecklinkPlugin::initialise() {
 }
 
 void BMDecklinkPlugin::set_pc_audio_muting() {
-
-    // we can get access to the 
+    // TODO: actor_registry API not available in current xStudio/CAF build
+    /*
     auto pc_audio_output_actor =
         system().registry().template get<caf::actor>(pc_audio_output_registry);
 
@@ -309,7 +302,7 @@ void BMDecklinkPlugin::set_pc_audio_muting() {
         const bool mute = disable_pc_audio_when_running_->value() && sdi_output_is_running_->value();
         anon_send(pc_audio_output_actor, audio::set_override_volume_atom_v, mute ? 0.0f : 100.0f);
     }
-
+    */
 }
 
 BMDecklinkPlugin::~BMDecklinkPlugin() {

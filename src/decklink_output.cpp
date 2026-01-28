@@ -14,8 +14,9 @@ using namespace xstudio::bm_decklink_plugin_1_0;
 RGB10BitVideoFrame::RGB10BitVideoFrame(long width, long height, BMDFrameFlags flags) : 
 	_width(width), _height(height), _flags(flags), _refCount(1)
 {
-	// Allocate pixel buffer
-	_pixelBuffer.resize(_width*_height*4);
+	// Allocate pixel buffer with 256-byte row alignment as required by SDK for bmdFormat10BitRGB
+	long rowBytes = ((_width + 63) / 64) * 256;
+	_pixelBuffer.resize(rowBytes * _height);
 }
 
 HRESULT RGB10BitVideoFrame::GetBytes(void **buffer)
@@ -243,14 +244,18 @@ void DecklinkOutput::query_display_modes() {
                 display_mode->GetName((const char **)&buf);
                 display_mode->GetFrameRate(&frame_duration_, &frame_timescale_);
 
-                // only names with 'i' in are interalaced as far as I can tell                
-                const bool interlaced = std::string(buf).find("i") != std::string::npos;
-
-                // I've decided that support for interlaced modes is not useful!
-                if (interlaced) continue;
-
+                const std::string mode_name(buf);
                 const std::string resolution_string = fmt::format("{} x {}", display_mode->GetWidth(), display_mode->GetHeight());
                 std::string refresh_rate = fmt::format("{:.3f}", double(frame_timescale_)/double(frame_duration_));
+
+                // only names with 'i' in are interalaced as far as I can tell                
+                const bool interlaced = mode_name.find("i") != std::string::npos;
+
+                // I've decided that support for interlaced modes is not useful!
+                if (interlaced) {
+                    continue;
+                }
+
                 // erase all but the last trailing zero
                 while (refresh_rate.back() == '0' && refresh_rate.rfind(".0") != (refresh_rate.size()-2)) {
                     refresh_rate.pop_back();
@@ -596,6 +601,26 @@ void DecklinkOutput::fill_decklink_video_frame(IDeckLinkVideoFrame* decklink_vid
                 } else if (decklink_video_frame->GetPixelFormat() == bmdFormat12BitRGBLE) {
 
                     pixel_swizzler_.cpy16bitRGBA_to_12bitRGBLE(pFrame, the_frame->buffer(), num_pix);
+
+                } else if (decklink_video_frame->GetPixelFormat() == bmdFormat8BitYUV ||
+                           decklink_video_frame->GetPixelFormat() == bmdFormat10BitYUV) {
+
+                    // For YUV output, first convert RGBA16 to 10-bit RGB intermediate,
+                    // then use Decklink SDK converter to YUV
+                    if (!intermediate_frame_ || intermediate_frame_->GetWidth() != decklink_video_frame->GetWidth() || 
+                        intermediate_frame_->GetHeight() != decklink_video_frame->GetHeight()) {
+                        if (intermediate_frame_) intermediate_frame_->Release();
+                        intermediate_frame_ = new RGB10BitVideoFrame(decklink_video_frame->GetWidth(), decklink_video_frame->GetHeight(), decklink_video_frame->GetFlags());
+                    }
+
+                    void* pIntermediateFrame;
+                    intermediate_frame_->GetBytes((void**)&pIntermediateFrame);
+                    pixel_swizzler_.cpy16bitRGBA_to_10bitRGB(pIntermediateFrame, the_frame->buffer(), num_pix);
+
+                    auto result = frame_converter_->ConvertFrame(intermediate_frame_, decklink_video_frame);
+                    if (FAILED(result)) {
+                        stop_sdi_output("Unable to convert frame to YUV format.");
+                    }
 
                 }
 

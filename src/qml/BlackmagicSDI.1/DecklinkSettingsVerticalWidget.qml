@@ -213,34 +213,9 @@ Item {
                 color: XsStyleSheet.widgetBgNormalColor
             }
 
-            RowLayout {
-
-                Layout.fillWidth:  true
-                spacing: 10
-
-                XsSecondaryButton{
-    
-                    id: subsetBtn
-                    z: 100
-                    imgSrc: "qrc:/icons/chevron_right.svg"
-                    width: 20
-                    height: 20
-                    rotation: advanced_settings.visible ? 90:0
-                    imageSrcSize: width
-                    Behavior on rotation {NumberAnimation{duration: 150 }}
-                    bgColorPressed: bgColorNormal
-                    onClicked:{
-                        advanced_settings.visible = !advanced_settings.visible
-                    }
-    
-                }
-
-                XsLabel {
-                    Layout.alignment: Qt.AlignVCenter | Qt.AlignLeft
-                    height: 1
-                    text: "Advanced"
-                }
-        
+            XsLabel {
+                Layout.alignment: Qt.AlignVCenter | Qt.AlignLeft
+                text: "Advanced"
             }
 
             ColumnLayout {
@@ -248,7 +223,7 @@ Item {
                 spacing: 10
                 id: advanced_settings
                 Layout.fillWidth: true
-                visible: false
+                visible: true
     
                 DecklinkMultichoiceSetting {
                     Layout.fillWidth: true
@@ -275,16 +250,19 @@ Item {
                 }
 
                 DecklinkIntegerSetting {
+                    Layout.fillWidth: true
                     integer_attr_name: "Audio Sync Delay"
-                    display_name: "Audio Delay / msec"
+                    display_name: "Audio Delay (ms)"
                 }
                     
                 DecklinkIntegerSetting {
+                    Layout.fillWidth: true
                     integer_attr_name: "Video Sync Delay"
-                    display_name: "Video Delay / msec"
+                    display_name: "Video Delay (ms)"
                 }
 
                 DecklinkToggleSetting {
+                    Layout.fillWidth: true
                     display_name: "Mute PC Audio"
                     toggle_attr_name: "Auto Disable PC Audio"
                 }
