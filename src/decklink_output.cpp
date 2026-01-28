@@ -14,8 +14,9 @@ using namespace xstudio::bm_decklink_plugin_1_0;
 RGB10BitVideoFrame::RGB10BitVideoFrame(long width, long height, BMDFrameFlags flags) : 
 	_width(width), _height(height), _flags(flags), _refCount(1)
 {
-	// Allocate pixel buffer
-	_pixelBuffer.resize(_width*_height*4);
+	// Allocate pixel buffer with 256-byte row alignment as required by SDK for bmdFormat10BitRGB
+	long rowBytes = ((_width + 63) / 64) * 256;
+	_pixelBuffer.resize(rowBytes * _height);
 }
 
 HRESULT RGB10BitVideoFrame::GetBytes(void **buffer)
