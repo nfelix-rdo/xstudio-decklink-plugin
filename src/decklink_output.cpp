@@ -232,16 +232,12 @@ void DecklinkOutput::query_display_modes() {
     IDeckLinkDisplayModeIterator*		display_mode_iterator = NULL;
     IDeckLinkDisplayMode*				display_mode = NULL;
 
-    spdlog::info("=== Querying Decklink Display Modes ===");
-
     try {
         
         // Get first avaliable video mode for Output
         if (decklink_output_interface_->GetDisplayModeIterator(&display_mode_iterator) == S_OK)
         {
-            int mode_count = 0;
             while (display_mode_iterator->Next(&display_mode) == S_OK) {
-                mode_count++;
                 char *buf = new char [4096];
                 memset(buf,0,4096);
                 display_mode->GetName((const char **)&buf);
@@ -251,16 +247,11 @@ void DecklinkOutput::query_display_modes() {
                 const std::string resolution_string = fmt::format("{} x {}", display_mode->GetWidth(), display_mode->GetHeight());
                 std::string refresh_rate = fmt::format("{:.3f}", double(frame_timescale_)/double(frame_duration_));
 
-                // Log ALL modes before filtering
-                spdlog::info("Mode {}: name='{}' resolution='{}' rate='{}'", 
-                    mode_count, mode_name, resolution_string, refresh_rate);
-
                 // only names with 'i' in are interalaced as far as I can tell                
                 const bool interlaced = mode_name.find("i") != std::string::npos;
 
                 // I've decided that support for interlaced modes is not useful!
                 if (interlaced) {
-                    spdlog::info("  -> SKIPPED (interlaced)");
                     continue;
                 }
 
@@ -269,19 +260,13 @@ void DecklinkOutput::query_display_modes() {
                     refresh_rate.pop_back();
                 }
 
-                spdlog::info("  -> ADDED: {} @ {}", resolution_string, refresh_rate);
                 refresh_rate_per_output_resolution_[resolution_string].push_back(refresh_rate);
                 display_modes_[std::make_pair(resolution_string, refresh_rate)] = display_mode->GetDisplayMode();
 
             }
-            spdlog::info("Total modes found: {}, Progressive modes added: {}", 
-                mode_count, refresh_rate_per_output_resolution_.size());
-        } else {
-            spdlog::error("GetDisplayModeIterator() FAILED");
         }
     } catch (std::exception & e) {
 
-        spdlog::error("query_display_modes exception: {}", e.what());
         report_error(e.what());
         
     }        
@@ -615,6 +600,26 @@ void DecklinkOutput::fill_decklink_video_frame(IDeckLinkVideoFrame* decklink_vid
                 } else if (decklink_video_frame->GetPixelFormat() == bmdFormat12BitRGBLE) {
 
                     pixel_swizzler_.cpy16bitRGBA_to_12bitRGBLE(pFrame, the_frame->buffer(), num_pix);
+
+                } else if (decklink_video_frame->GetPixelFormat() == bmdFormat8BitYUV ||
+                           decklink_video_frame->GetPixelFormat() == bmdFormat10BitYUV) {
+
+                    // For YUV output, first convert RGBA16 to 10-bit RGB intermediate,
+                    // then use Decklink SDK converter to YUV
+                    if (!intermediate_frame_ || intermediate_frame_->GetWidth() != decklink_video_frame->GetWidth() || 
+                        intermediate_frame_->GetHeight() != decklink_video_frame->GetHeight()) {
+                        if (intermediate_frame_) intermediate_frame_->Release();
+                        intermediate_frame_ = new RGB10BitVideoFrame(decklink_video_frame->GetWidth(), decklink_video_frame->GetHeight(), decklink_video_frame->GetFlags());
+                    }
+
+                    void* pIntermediateFrame;
+                    intermediate_frame_->GetBytes((void**)&pIntermediateFrame);
+                    pixel_swizzler_.cpy16bitRGBA_to_10bitRGB(pIntermediateFrame, the_frame->buffer(), num_pix);
+
+                    auto result = frame_converter_->ConvertFrame(intermediate_frame_, decklink_video_frame);
+                    if (FAILED(result)) {
+                        stop_sdi_output("Unable to convert frame to YUV format.");
+                    }
 
                 }
 
