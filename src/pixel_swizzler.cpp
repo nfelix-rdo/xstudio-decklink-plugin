@@ -34,15 +34,22 @@ void PixelSwizzler::cpy16bitRGBA_to_10bitRGB(
     // is tiny.
     std::vector<std::thread> memcpy_threads;
     size_t step = ((num_pix / n_threads_) / 4096) * 4096;
+    if (step == 0) step = num_pix; // handle small images
 
     uint32_t *dst = (uint32_t *)_dst;
     uint16_t *src = (uint16_t *)_src;
 
-    for (int i = 0; i < n_threads_; ++i) {
-        memcpy_threads.emplace_back(swizzle_chunk, dst, src, std::min(num_pix, step));
-        dst += step;
-        src += step*4;
-        num_pix -= step;
+    for (int i = 0; i < n_threads_ && num_pix > 0; ++i) {
+        size_t chunk = std::min(num_pix, step);
+        memcpy_threads.emplace_back(swizzle_chunk, dst, src, chunk);
+        dst += chunk;
+        src += chunk*4;
+        num_pix -= chunk;
+    }
+
+    // Process any remaining pixels in main thread
+    if (num_pix > 0) {
+        swizzle_chunk(dst, src, num_pix);
     }
 
     // ensure any threads still running to copy data to this texture are done
@@ -78,15 +85,22 @@ void PixelSwizzler::cpy16bitRGBA_to_10bitRGBLE(
     // is tiny.
     std::vector<std::thread> memcpy_threads;
     size_t step = ((num_pix / n_threads_) / 4096) * 4096;
+    if (step == 0) step = num_pix;
 
     uint32_t *dst = (uint32_t *)_dst;
     uint16_t *src = (uint16_t *)_src;
 
-    for (int i = 0; i < n_threads_; ++i) {
-        memcpy_threads.emplace_back(swizzle_chunk, dst, src, std::min(num_pix, step));
-        dst += step;
-        src += step*4;
-        num_pix -= step;
+    for (int i = 0; i < n_threads_ && num_pix > 0; ++i) {
+        size_t chunk = std::min(num_pix, step);
+        memcpy_threads.emplace_back(swizzle_chunk, dst, src, chunk);
+        dst += chunk;
+        src += chunk*4;
+        num_pix -= chunk;
+    }
+
+    // Process any remaining pixels in main thread
+    if (num_pix > 0) {
+        swizzle_chunk(dst, src, num_pix);
     }
 
     // ensure any threads still running to copy data to this texture are done
@@ -149,15 +163,24 @@ void PixelSwizzler::cpy16bitRGBA_to_12bitRGBLE(
 
     std::vector<std::thread> memcpy_threads;
     size_t step = ((num_pix / n_threads_) / 4128) * 4128;
+    if (step == 0) step = (num_pix / 4) * 4; // must be multiple of 4 for 12-bit
 
     uint16_t *dst = (uint16_t *)_dst;
     uint16_t *src = (uint16_t *)_src;
 
-    for (int i = 0; i < n_threads_; ++i) {
-        memcpy_threads.emplace_back(swizzle_chunk, dst, src, std::min(num_pix, step));
-        dst += (step*9)/4;
-        src += step*4;
-        num_pix -= step;
+    for (int i = 0; i < n_threads_ && num_pix > 0; ++i) {
+        size_t chunk = std::min(num_pix, step);
+        chunk = (chunk / 4) * 4; // ensure multiple of 4
+        if (chunk == 0) break;
+        memcpy_threads.emplace_back(swizzle_chunk, dst, src, chunk);
+        dst += (chunk*9)/4;
+        src += chunk*4;
+        num_pix -= chunk;
+    }
+
+    // Process any remaining pixels in main thread
+    if (num_pix >= 4) {
+        swizzle_chunk(dst, src, (num_pix / 4) * 4);
     }
 
     // ensure any threads still running to copy data to this texture are done
@@ -227,15 +250,24 @@ void PixelSwizzler::cpy16bitRGBA_to_12bitRGB(
 
     std::vector<std::thread> memcpy_threads;
     size_t step = ((num_pix / n_threads_) / 4128) * 4128;
+    if (step == 0) step = (num_pix / 4) * 4;
 
     uint16_t *dst = (uint16_t *)_dst;
     uint16_t *src = (uint16_t *)_src;
 
-    for (int i = 0; i < n_threads_; ++i) {
-        memcpy_threads.emplace_back(swizzle_chunk, dst, src, std::min(num_pix, step));
-        dst += (step*9)/4;
-        src += step*4;
-        num_pix -= step;
+    for (int i = 0; i < n_threads_ && num_pix > 0; ++i) {
+        size_t chunk = std::min(num_pix, step);
+        chunk = (chunk / 4) * 4;
+        if (chunk == 0) break;
+        memcpy_threads.emplace_back(swizzle_chunk, dst, src, chunk);
+        dst += (chunk*9)/4;
+        src += chunk*4;
+        num_pix -= chunk;
+    }
+
+    // Process any remaining pixels in main thread
+    if (num_pix >= 4) {
+        swizzle_chunk(dst, src, (num_pix / 4) * 4);
     }
 
     // ensure any threads still running to copy data to this texture are done
