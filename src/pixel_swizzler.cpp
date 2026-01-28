@@ -13,13 +13,15 @@ void PixelSwizzler::cpy16bitRGBA_to_10bitRGB(
 
     // could SSE instructions be used here, or will compiler achieve that
     // for us?
+    // bmdFormat10BitRGB uses SMPTE video levels: 64-960 (not full range 0-1023)
+    // Scale from 16-bit full range to 10-bit SMPTE: out = 64 + (in * 896 / 65536)
     auto swizzle_chunk = [](uint32_t * _dst, uint16_t * _src, size_t n) {
 
         while (n--) {             
 
-            uint32_t red = *(_src++) >> 6;
-            uint32_t green = *(_src++) >> 6;
-            uint32_t blue = *(_src++) >> 6;
+            uint32_t red = 64 + ((*(_src++) * 896) >> 16);
+            uint32_t green = 64 + ((*(_src++) * 896) >> 16);
+            uint32_t blue = 64 + ((*(_src++) * 896) >> 16);
             _src++; // skip alpha
             uint32_t le = (blue) + (green << 10) + (red << 20);   
             *(_dst++) = __builtin_bswap32(le);
