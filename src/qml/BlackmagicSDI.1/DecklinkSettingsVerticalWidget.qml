@@ -181,9 +181,11 @@ Item {
                 label_text: "Image Fit Mode"
                 attrs_model: decklink_viewport_attributes
                 attr_name: "Fit (F)"
+                enabled: !link_toggle.attr_value
             }
 
             DecklinkToggleSetting {
+                id: link_toggle
                 display_name: "Track Zoom/Pan"
                 toggle_attr_name: "Track Viewport"
             }
@@ -216,6 +218,36 @@ Item {
             XsLabel {
                 Layout.alignment: Qt.AlignVCenter | Qt.AlignLeft
                 text: "Advanced"
+            }
+            
+            RowLayout {
+
+                Layout.fillWidth:  true
+                spacing: 10
+
+                XsSecondaryButton{
+    
+                    id: subsetBtn
+                    z: 100
+                    imgSrc: "qrc:/icons/chevron_right.svg"
+                    width: 20
+                    height: 20
+                    rotation: advanced_settings.visible ? 90:0
+                    imageSrcSize: width
+                    Behavior on rotation {NumberAnimation{duration: 150 }}
+                    bgColorPressed: bgColorNormal
+                    onClicked:{
+                        advanced_settings.visible = !advanced_settings.visible
+                    }
+    
+                }
+
+                XsLabel {
+                    Layout.alignment: Qt.AlignVCenter | Qt.AlignLeft
+                    height: 1
+                    text: "Advanced"
+                }
+        
             }
 
             ColumnLayout {

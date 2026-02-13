@@ -245,16 +245,15 @@ void DecklinkOutput::query_display_modes() {
                 display_mode->GetFrameRate(&frame_duration_, &frame_timescale_);
 
                 const std::string mode_name(buf);
-                const std::string resolution_string = fmt::format("{} x {}", display_mode->GetWidth(), display_mode->GetHeight());
-                std::string refresh_rate = fmt::format("{:.3f}", double(frame_timescale_)/double(frame_duration_));
 
-                // only names with 'i' in are interalaced as far as I can tell                
+                // only names with 'i' in are interlaced as far as I can tell                
                 const bool interlaced = mode_name.find("i") != std::string::npos;
 
                 // I've decided that support for interlaced modes is not useful!
-                if (interlaced) {
-                    continue;
-                }
+                if (interlaced) continue;
+
+                const std::string resolution_string = fmt::format("{} x {}", display_mode->GetWidth(), display_mode->GetHeight());
+                std::string refresh_rate = fmt::format("{:.3f}", double(frame_timescale_)/double(frame_duration_));
 
                 // erase all but the last trailing zero
                 while (refresh_rate.back() == '0' && refresh_rate.rfind(".0") != (refresh_rate.size()-2)) {
@@ -593,6 +592,14 @@ void DecklinkOutput::fill_decklink_video_frame(IDeckLinkVideoFrame* decklink_vid
                 if (decklink_video_frame->GetPixelFormat() == bmdFormat10BitRGB) {
 
                     pixel_swizzler_.cpy16bitRGBA_to_10bitRGB(pFrame, the_frame->buffer(), num_pix);
+
+                } else if (decklink_video_frame->GetPixelFormat() == bmdFormat10BitRGBXLE) {
+
+                    pixel_swizzler_.cpy16bitRGBA_to_10bitRGBXLE(pFrame, the_frame->buffer(), num_pix);
+
+                } else if (decklink_video_frame->GetPixelFormat() == bmdFormat10BitRGBX) {
+
+                    pixel_swizzler_.cpy16bitRGBA_to_10bitRGBX(pFrame, the_frame->buffer(), num_pix);
 
                 } else if (decklink_video_frame->GetPixelFormat() == bmdFormat12BitRGB) {
 

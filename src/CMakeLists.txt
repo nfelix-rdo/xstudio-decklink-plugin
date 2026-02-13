@@ -1,5 +1,3 @@
-include("${CMAKE_CURRENT_SOURCE_DIR}/../cmake/macros.cmake")
-
 project(blackmagic_decklink VERSION 0.1.0 LANGUAGES CXX)
 
 find_package(xStudio REQUIRED)
@@ -29,7 +27,7 @@ target_link_libraries(${PROJECT_NAME}
 	PUBLIC
 		xstudio::plugin_manager
 		xstudio::bookmark
-		caf::core
+		CAF::core
 		Qt6::Core
 )
 
